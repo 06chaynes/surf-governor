@@ -20,7 +20,7 @@
 
 // TODO: figure out how to add jitter support using `governor::Jitter`.
 // TODO: add usage examples (both in the docs and in an examples directory).
-// TODO: add unit tests.
+// TODO: add more unit tests.
 use governor::{
     clock::{Clock, DefaultClock},
     state::keyed::DefaultKeyedStateStore,
@@ -122,5 +122,29 @@ impl surf::middleware::Middleware for GovernorMiddleware {
                 Ok(res.try_into()?)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::GovernorMiddleware;
+    use surf::{http::Method, Client, Request};
+    use url::Url;
+    use wiremock::{matchers::method, Mock, MockServer, ResponseTemplate};
+    #[async_std::test]
+    async fn limits_requests() -> surf::Result<()> {
+        let mock_server = MockServer::start().await;
+        let m = Mock::given(method("GET"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("Hello!".to_string()))
+            .expect(1);
+        let _mock_guard = mock_server.register_as_scoped(m).await;
+        let url = format!("{}/", &mock_server.uri());
+        let req = Request::new(Method::Get, Url::parse(&url).unwrap());
+        let client = Client::new().with(GovernorMiddleware::per_second(1)?);
+        let good_res = client.send(req.clone()).await?;
+        assert_eq!(good_res.status(), 200);
+        let wait_res = client.send(req).await?;
+        assert_eq!(wait_res.status(), 429);
+        Ok(())
     }
 }
