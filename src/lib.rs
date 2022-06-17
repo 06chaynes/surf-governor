@@ -1,3 +1,16 @@
+#![forbid(unsafe_code, future_incompatible)]
+#![deny(
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations,
+    nonstandard_style,
+    unused_qualifications,
+    unused_import_braces,
+    unused_extern_crates,
+    trivial_casts,
+    trivial_numeric_casts
+)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 //! A [surf] middleware that implements rate-limiting using [governor].
 //! The majority of this has been copied from [tide-governor](https://github.com/ohmree/tide-governor)
 //! # Example
@@ -19,7 +32,6 @@
 //! [governor]: https://github.com/antifuchs/governor
 
 // TODO: figure out how to add jitter support using `governor::Jitter`.
-// TODO: add usage examples (both in the docs and in an examples directory).
 // TODO: add more unit tests.
 use governor::{
     clock::{Clock, DefaultClock},
@@ -47,6 +59,24 @@ impl GovernorMiddleware {
     /// Constructs a rate-limiting middleware from a [`Duration`] that allows one request in the given time interval.
     ///
     /// If the time interval is zero, returns `None`.
+    /// # Example
+    /// This constructs a client with a governor set to 1 requests every 5 nanoseconds
+    /// ```no_run
+    /// use surf_governor::GovernorMiddleware;
+    /// use surf::{Client, Request, http::Method};
+    /// use url::Url;
+    ///
+    /// use std::time::Duration;
+    ///
+    /// #[async_std::main]
+    /// async fn main() -> surf::Result<()> {
+    ///     let req = Request::new(Method::Get, Url::parse("https://example.api")?);
+    ///     // Construct Surf client with a governor
+    ///     let client = Client::new().with(GovernorMiddleware::with_period(Duration::new(0, 5)).unwrap());
+    ///     let res = client.send(req).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     #[must_use]
     pub fn with_period(duration: Duration) -> Option<Self> {
         Some(Self {
@@ -59,6 +89,23 @@ impl GovernorMiddleware {
     /// Constructs a rate-limiting middleware that allows a specified number of requests every second.
     ///
     /// Returns an error if `times` can't be converted into a [`NonZeroU32`].
+    ///
+    /// # Example
+    /// This constructs a client with a governor set to 30 requests per second limit
+    /// ```no_run
+    /// use surf_governor::GovernorMiddleware;
+    /// use surf::{Client, Request, http::Method};
+    /// use url::Url;
+    ///
+    /// #[async_std::main]
+    /// async fn main() -> surf::Result<()> {
+    ///     let req = Request::new(Method::Get, Url::parse("https://example.api")?);
+    ///     // Construct Surf client with a governor
+    ///     let client = Client::new().with(GovernorMiddleware::per_second(30)?);
+    ///     let res = client.send(req).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn per_second<T>(times: T) -> Result<Self>
     where
         T: TryInto<NonZeroU32>,
@@ -74,6 +121,23 @@ impl GovernorMiddleware {
     /// Constructs a rate-limiting middleware that allows a specified number of requests every minute.
     ///
     /// Returns an error if `times` can't be converted into a [`NonZeroU32`].
+    ///
+    /// # Example
+    /// This constructs a client with a governor set to 300 requests per minute limit
+    /// ```no_run
+    /// use surf_governor::GovernorMiddleware;
+    /// use surf::{Client, Request, http::Method};
+    /// use url::Url;
+    ///
+    /// #[async_std::main]
+    /// async fn main() -> surf::Result<()> {
+    ///     let req = Request::new(Method::Get, Url::parse("https://example.api")?);
+    ///     // Construct Surf client with a governor
+    ///     let client = Client::new().with(GovernorMiddleware::per_minute(300)?);
+    ///     let res = client.send(req).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn per_minute<T>(times: T) -> Result<Self>
     where
         T: TryInto<NonZeroU32>,
@@ -89,6 +153,23 @@ impl GovernorMiddleware {
     /// Constructs a rate-limiting middleware that allows a specified number of requests every hour.
     ///
     /// Returns an error if `times` can't be converted into a [`NonZeroU32`].
+    ///
+    /// # Example
+    /// This constructs a client with a governor set to 3000 requests per hour limit
+    /// ```no_run
+    /// use surf_governor::GovernorMiddleware;
+    /// use surf::{Client, Request, http::Method};
+    /// use url::Url;
+    ///
+    /// #[async_std::main]
+    /// async fn main() -> surf::Result<()> {
+    ///     let req = Request::new(Method::Get, Url::parse("https://example.api")?);
+    ///     // Construct Surf client with a governor
+    ///     let client = Client::new().with(GovernorMiddleware::per_hour(3000)?);
+    ///     let res = client.send(req).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn per_hour<T>(times: T) -> Result<Self>
     where
         T: TryInto<NonZeroU32>,
