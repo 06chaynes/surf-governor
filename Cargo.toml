@@ -1,6 +1,6 @@
 [package]
 name = "surf-governor"
-version = "0.1.3"
+version = "0.2.0"
 description = "A rate-limiting middleware for surf"
 authors = ["Christian Haynes <06chaynes@gmail.com>"]
 repository = "https://github.com/06chaynes/surf-governor.git"
@@ -11,16 +11,16 @@ categories = [
     "web-programming::http-client"
 ]
 edition = "2021"
-rust-version = "1.59.0"
+rust-version = "1.60.0"
 
 [dependencies]
-governor = "0.5.1"
+governor = "0.6.0"
 http-types = "2.12.0"
 lazy_static = "1.4.0"
 surf = { version = "2.3.2", default-features = false }
 
 [dev-dependencies]
 async-std = { version = "1.12.0", features = ["attributes"] }
-url = "2.3.1"
-wiremock = "0.5.17"
+url = "2.4.0"
+wiremock = "0.5.19"
 surf = { version = "2.3.2", features = ["curl-client"] }
